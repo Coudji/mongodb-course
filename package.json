@@ -1,4 +1,8 @@
 {
+	"scripts": {
+		"execute": "exec-script.bat",
+		"start": "exec-start.bat"
+	},
 	"devDependencies": {
 		"@ngneat/falso": "^7.0.1"
 	}
