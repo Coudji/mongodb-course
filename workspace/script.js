@@ -1,72 +1,112 @@
 let db = connect("mongodb://root:test123@localhost");
-
-/* let dbList = db.adminCommand("listDatabases");
-console.log(dbList); */
-
-// équivalent a "use technocite"
-//db = db.getSiblingDB("technocite");
-
-
-/* const newStudent = db.students.insertOne({
-    name: "Amaury petit"
-}); */
-
-/* const newStudent = db.students.insertMany([
-    {
-        name: "Amaury grand"
-    },
-    {
-        name: "Amaury moyen"
-    }
-]); */
-
-/* const formateur = db.formators.insertOne({
-    name : "Amaury",
-    note : "5%/fun"
-}); */
-
-//lire des données
-//const formateur = db.formators.find();
-
-/* const formateur = db.formators.find({
-    name: "Amaury"
-}) */
-
+//db = db.getSiblingDB("sample_analytics");
 db = db.getSiblingDB("sample_mflix");
 
-/* let jurassic = db.movies.find({
-    title:"Jurassic Park"
-}); */
-
-/* let jurassic = db.movies.find({
-    title:{
-        $eq: "Jurassic Park"
+/* const transactions = db.comments.aggregate([
+    //1ere opération
+    {
+        $match: {
+            name: "Andrea Le",
+        }
+    },
+    //optionnel 
+    //Si on met pas le movie_id dans la projection il est pas dispo pour le group.
+    {
+        $project: {
+            _id: "$movie_id",
+            count:{
+                $count:{}
+            }
+        }
+    },
+    // 2e opération
+    {
+        $group:{
+            _id:"$movie_id",
+            count:{
+                $count:{}
+            }
+        }
     }
-}); */
+]);
 
-/* let movies = db.movies.find({
-    title:{
-        $ne: "Jurassic Park"
+console.log(transactions); */
+
+
+
+/* const clients = db.customers.aggregate([
+    {
+        $match: {
+            name: 'Brad Cardenas'
+        }
+    },
+    //{
+        //$unwind: "$accounts"
+    //},
+    {
+        $count: 'count_bank_accounts'
     }
-}); */
+]);
 
-/* let sousChamp = db.movies.find({
-    'tomatoes.viewer.numReviews': {
-        $gt: 500
-    }
-}); */
+console.log(clients); */
 
-/* let georgeLucasFilms = db.movies.find({
-    directors: {
-        $in: ['George Lucas']
-    }
-}); */
+/* const limited = db.movies.aggregate(
+    [
+        {
+            $match:{
+                year:{
+                    $gt:2010
+                }
+            }
+        },
+        {
+            $limit: 5
+        },
+        {
+            $out: {
+                db:"sample_mflix",
+                coll: "recent_movies"
+            }
+        }
+    ]
+);
+console.log(limited); */
 
-let georgeLucasFilms = db.movies.find({
-    cast: {
-        $all: ['Ewan McGregor','Natalie Portman']
-    }
-});
+db.movies.aggregate(
+    [
+        {
+            $match:{
+                'imdb.rating': {
+                    $lt:5
+                }
+            }
+        },
+        {
+            $unwind:'$directors'
+        },
+        {
+            $group: {
+                _id: '$directors',
+                total: {
+                    $count: {}
+                }
+            }
+        },
+        {
+            $sort:{
+                total: -1
+            }
+        },
+        {
+            $limit:10
+        },
+        {
+            $out: {
+                db:'sample_mflix',
+                coll:'lame_directors'
+            }
+        }
+    ]
+)
 
-
-console.log(georgeLucasFilms);
+console.log(db.lame_directors.find());
